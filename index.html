@@ -84,9 +84,118 @@
       pointer-events: none;
     }
 
+    /* Botón flotante para la carta */
+    .btn-message {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+      color: white;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      font-size: 1.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(255, 183, 0, 0.4);
+      transition: all 0.3s ease;
+    }
+
+    .btn-message:hover {
+      transform: scale(1.15) rotate(10deg);
+      background: rgba(255, 183, 0, 0.3);
+      box-shadow: 0 0 30px rgba(255, 183, 0, 0.8);
+    }
+
+    /* Modal emergente de la carta */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(2, 2, 8, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03));
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      box-shadow: 0 0 40px rgba(255, 140, 0, 0.3);
+      border-radius: 20px;
+      padding: 35px 30px;
+      max-width: 500px;
+      width: 90%;
+      color: #fff;
+      text-align: center;
+      position: relative;
+      transform: translateY(30px);
+      transition: transform 0.4s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-card h2 {
+      font-size: 2rem;
+      margin-bottom: 15px;
+      color: #ffd700;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+    }
+
+    .modal-card p {
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: #eaeaea;
+      margin-bottom: 25px;
+    }
+
+    .close-btn {
+      background: linear-gradient(45deg, #ff8c00, #ff4500);
+      border: none;
+      color: white;
+      padding: 10px 25px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 25px;
+      cursor: pointer;
+      box-shadow: 0 0 15px rgba(255, 69, 0, 0.5);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .close-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(255, 69, 0, 0.8);
+    }
+
     @media (max-width: 768px) {
       .title-banner h1 {
         font-size: 2.2rem;
+      }
+      .btn-message {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.4rem;
       }
     }
   </style>
@@ -101,7 +210,23 @@
   </div>
 
   <div id="canvas-container"></div>
-  <div class="instructions">Usa el ratón para mover la galaxia y hacer zoom</div>
+  <div class="instructions">Usa el ratón para mover la galaxia, haz clic para crear chispas y zoom</div>
+
+  <!-- Botón Flotante para la Carta -->
+  <button class="btn-message" id="openMsg" title="Abrir mensaje">💌</button>
+
+  <!-- Ventana Modal con el Mensaje Oculto -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-card">
+      <h2>Para María ✨</h2>
+      <p>
+        Querida María,<br><br>
+        En todo este vasto universo no hay una estrella que brille con la misma intensidad y calidez que tú. 
+        Gracias por iluminar el mundo de quienes te rodean. Que tu vida siempre esté llena de luz, magia e infinitos momentos de felicidad.
+      </p>
+      <button class="close-btn" id="closeMsg">Cerrar ✨</button>
+    </div>
+  </div>
 
   <script>
     // ------------------- ESCENA Y CÁMARA 3D -------------------
@@ -151,7 +276,6 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Manchas solares y llamaradas simuladas
       ctx.fillStyle = 'rgba(255, 255, 200, 0.35)';
       for (let i = 0; i < 600; i++) {
         const x = Math.random() * canvas.width;
@@ -183,7 +307,6 @@
     sunMesh.renderOrder = 10;
     sunGroup.add(sunMesh);
 
-    // Corona y Resplandor Exterior del Sol
     function createSunGlow() {
       const canvas = document.createElement('canvas');
       canvas.width = 256;
@@ -215,7 +338,7 @@
     const sunGlow = createSunGlow();
     sunGroup.add(sunGlow);
 
-    // ------------------- GALAXIA Y NEBULOSA EN TODA LA PANTALLA -------------------
+    // ------------------- GALAXIA Y NEBULOSA -------------------
     const galaxyGroup = new THREE.Group();
     scene.add(galaxyGroup);
 
@@ -399,19 +522,13 @@
       tulipGroup.add(sprite);
     }
 
-    // ------------------- FRASES EN 6 ÓRBITAS -------------------
+    // ------------------- FRASES EN ÓRBITAS -------------------
     const orbitPhrases = [
-      // Órbita 1 (Interior)
       ["Eres Luz ✨", "Te quiero mucho 💖", "Sigue brillando 🌟", "¡Universo hermoso! 🎉", "Un abrazo enorme 🤗", "Mi favorita 💕"],
-      // Órbita 2
       ["Deseos infinitos 🌠", "Siempre sonríe 😊", "Un año de magia ✨", "¡Universo María! 🌷", "Sé muy feliz 🌺", "Gracias por existir 💫"],
-      // Órbita 3
       ["El universo celebra 🌌", "Más que mil estrellas 💫", "Sueños al infinito 🚀", "Universo y magia ☀️", "Infinitas alegrías 🌸", "Eres increíble 🌷"],
-      // Órbita 4
       ["Un año radiante ✨", "Vive cada instante 💖", "Brillas con alma 🌟", "Sonrisas eternas 😊", "Día maravilloso 🎉", "Amor y luz 💕"],
-      // Órbita 5
       ["Abrazos al cielo 🌌", "Magia sin fin 🌠", "Momento inolvidable ☀️", "Sigue tus sueños 🚀", "Tu luz es única 🌺", "Siempre especial 💫"],
-      // Órbita 6 (Exterior)
       ["Pide un deseo ✨", "Un universo para ti ☀️", "Felicidad pura 😊", "Brillo infinito ☀️", "Te queremos María 💖", "Celebra en grande 🌸"]
     ];
 
@@ -436,11 +553,9 @@
       return sprite;
     }
 
-    // Dibujar las 6 órbitas e insertar las frases
     for (let orbitIndex = 0; orbitIndex < 6; orbitIndex++) {
       const radius = (orbitIndex + 1) * 32 + 10;
 
-      // Línea de la órbita
       const orbitGeo = new THREE.RingGeometry(radius - 0.3, radius + 0.3, 128);
       const orbitMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
@@ -452,7 +567,6 @@
       orbitMesh.rotation.x = Math.PI / 2;
       galaxyGroup.add(orbitMesh);
 
-      // Distribuir 6 frases uniformemente
       const phrasesInOrbit = orbitPhrases[orbitIndex];
       const angleStep = (Math.PI * 2) / 6;
       const orbitOffsetAngle = orbitIndex * 0.3;
@@ -471,36 +585,54 @@
       });
     }
 
-    // ------------------- BUCLE DE ANIMACIÓN -------------------
-    let clock = new THREE.Clock();
+    // ------------------- IDEA 5: EXPLOSIÓN DE CHISPAS AL HACER CLIC -------------------
+    const clickParticles = [];
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
 
-    function animate() {
-      requestAnimationFrame(animate);
+    function createExplosion(point) {
+      const sparkCount = 45;
+      const sparkGeo = new THREE.BufferGeometry();
+      const sparkPos = new Float32Array(sparkCount * 3);
+      const sparkVelocities = [];
 
-      const elapsedTime = clock.getElapsedTime();
+      for (let i = 0; i < sparkCount; i++) {
+        sparkPos[i * 3] = point.x;
+        sparkPos[i * 3 + 1] = point.y;
+        sparkPos[i * 3 + 2] = point.z;
 
-      // Parpadeo de estrellas
-      particleMat.uniforms.uTime.value = elapsedTime;
+        const vx = (Math.random() - 0.5) * 3.5;
+        const vy = (Math.random() - 0.5) * 3.5;
+        const vz = (Math.random() - 0.5) * 3.5;
+        sparkVelocities.push(new THREE.Vector3(vx, vy, vz));
+      }
 
-      // Rotación y latido del Sol
-      sunMesh.rotation.y = elapsedTime * 0.08;
-      const scalePulse = 1 + Math.sin(elapsedTime * 2) * 0.02;
-      sunGlow.scale.set(110 * scalePulse, 110 * scalePulse, 1);
+      sparkGeo.setAttribute('position', new THREE.BufferAttribute(sparkPos, 3));
 
-      // Rotación suave de la galaxia completa
-      galaxyGroup.rotation.y = elapsedTime * 0.05;
+      const sparkMat = new THREE.PointsMaterial({
+        color: Math.random() > 0.5 ? 0xffd700 : 0xff69b4,
+        size: 2.5,
+        transparent: true,
+        opacity: 1,
+        blending: THREE.AdditiveBlending
+      });
 
-      controls.update();
-      renderer.render(scene, camera);
+      const sparkSystem = new THREE.Points(sparkGeo, sparkMat);
+      scene.add(sparkSystem);
+
+      clickParticles.push({
+        system: sparkSystem,
+        velocities: sparkVelocities,
+        life: 1.0
+      });
     }
 
-    animate();
+    window.addEventListener('pointerdown', (e) => {
+      // Ignorar clic si es sobre la ventana modal o el botón de carta
+      if (e.target.closest('#modalOverlay') || e.target.closest('#openMsg')) return;
 
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
-</body>
-</html>
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const plane = new THREE.Plane(n
