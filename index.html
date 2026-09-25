@@ -199,9 +199,16 @@
       }
     }
   </style>
-  <!-- Three.js y OrbitControls -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- Import Maps para cargar Three.js sin conflictos de librerías globales -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+      }
+    }
+  </script>
 </head>
 <body>
 
@@ -228,7 +235,10 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
     // ------------------- ESCENA Y CÁMARA 3D -------------------
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
@@ -244,7 +254,7 @@
     renderer.toneMappingExposure = 1.35;
     container.appendChild(renderer.domElement);
 
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
@@ -585,7 +595,7 @@
       });
     }
 
-    // ------------------- IDEA 5: EXPLOSIÓN DE CHISPAS AL HACER CLIC -------------------
+    // ------------------- EXPLOSIÓN DE CHISPAS AL HACER CLIC -------------------
     const clickParticles = [];
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -628,11 +638,7 @@
     }
 
     window.addEventListener('pointerdown', (e) => {
-      // Ignorar clic si es sobre la ventana modal o el botón de carta
       if (e.target.closest('#modalOverlay') || e.target.closest('#openMsg')) return;
 
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      const plane = new THREE.Plane(n
+      mouse.y = -(e.clientY
